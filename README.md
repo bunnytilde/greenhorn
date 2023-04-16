@@ -1,7 +1,7 @@
 # Greenhorn sideloader
 
 ## What it is?
-Greenhorn is a (work-in-progres) cross-platform, simple CLI to sideloads applications written in Python.
+Greenhorn is a (work-in-progres) cross-platform, simple CLI to sideloads applications, written in Python.
 
 ## Dependencies
 Greenhorn requires installed python3, pip, rclone and adb with configured PATH.
