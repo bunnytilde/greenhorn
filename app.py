@@ -1,6 +1,6 @@
 import requests, sys, os, logging, json, py7zr, base64, csv
+import time
 import hashlib
-import pandas as pd
 import subprocess
 
 # Configuration
@@ -34,9 +34,13 @@ def getConfig():
 
 
 # Function to download metadata from endpoint and extract it (7z archive with password)
+# Also downloading new metadata if older than 3 days
 def getMetadata():
     global config
-    if not os.path.isfile("meta.7z"):
+
+    if not os.path.isfile("meta.7z") or (
+        (time.time() - os.path.getmtime("meta.7z")) > 259200
+    ):
         logging.info("Downloading metadata...")
         # Creating rclone command and executing it
         rclone_cmd = f"rclone copy \":http:meta.7z\" . --http-url {config['baseUri']} --rc --progress"
@@ -44,10 +48,9 @@ def getMetadata():
         rclone_process = subprocess.Popen(rclone_cmd, shell=True)
         rclone_process_exit_code = rclone_process.wait()
         logging.info(f"{rclone_cmd} exited with code {rclone_process_exit_code}")
-
-    logging.info("Extracting metadata...")
-    with py7zr.SevenZipFile("meta.7z", "r", password=metadata_password) as archive:
-        archive.extractall(path=".")
+        logging.info("Extracting metadata...")
+        with py7zr.SevenZipFile("meta.7z", "r", password=metadata_password) as archive:
+            archive.extractall(path=".")
 
 
 # Helper function, to display all applications from metadata, just using pandas
@@ -61,7 +64,7 @@ def readMetadata():
 
 
 # We can download game by its releaseName from CSV
-# Title is MD5 encoded with "x2" appended to the end of hash
+# Title is MD5 encoded with "\n" appended to the end of hash
 def downloadGame(releaseName, packageName):
     global config, metadata_password
     # releaseName hash containes releaseName + newline
